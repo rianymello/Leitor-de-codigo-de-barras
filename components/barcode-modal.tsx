@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Save, X, Barcode, Package, DollarSign, Tag, Users, Grid3X3, Gamepad2, AlertCircle } from "lucide-react"
 import type { ScannedItem } from "@/app/page"
-import { PhotoCapture } from "@/components/photo-capture"
+// import { PhotoCapture } from "@/components/photo-capture" // Removed
 
 interface BarcodeModalProps {
   isOpen: boolean
@@ -61,14 +61,11 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
     ageRange: "",
     category: "",
     toyType: "",
-    photo: "",
   })
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    console.log("Salvando produto com foto:", formData.photo ? "Foto presente" : "Sem foto")
 
     setIsLoading(true)
 
@@ -84,14 +81,10 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
       ageRange: formData.ageRange || undefined,
       category: formData.category || undefined,
       toyType: formData.toyType || undefined,
-      photo: formData.photo || undefined, // Garantir que a foto seja incluída
       scannedAt: new Date().toISOString(),
     }
 
-    console.log("Item final a ser salvo:", {
-      ...item,
-      photo: item.photo ? "Foto incluída" : "Sem foto",
-    })
+    console.log("Item final a ser salvo:", item)
 
     await new Promise((resolve) => setTimeout(resolve, 600))
 
@@ -105,7 +98,6 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
       ageRange: "",
       category: "",
       toyType: "",
-      photo: "",
     })
     setIsLoading(false)
   }
@@ -119,20 +111,14 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
         ageRange: "",
         category: "",
         toyType: "",
-        photo: "",
       })
       onClose()
     }
   }
 
   const updateFormData = (field: string, value: string) => {
-    console.log(`Atualizando campo ${field}:`, field === "photo" ? (value ? "Foto recebida" : "Foto removida") : value)
+    console.log(`Atualizando campo ${field}:`, value)
     setFormData((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handlePhotoCapture = (photo: string) => {
-    console.log("Foto capturada no modal:", photo ? "Foto recebida" : "Foto removida")
-    updateFormData("photo", photo)
   }
 
   return (
@@ -322,11 +308,6 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
               </div>
             </div>
 
-            {/* Foto do Produto */}
-            <div className="space-y-4 pt-4 border-t border-slate-200">
-              <PhotoCapture onPhotoCapture={handlePhotoCapture} currentPhoto={formData.photo} />
-            </div>
-
             {/* Botões */}
             <div className="flex flex-col gap-3 pt-6 border-t border-slate-200">
               <Button
@@ -360,11 +341,6 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
               </Button>
             </div>
           </form>
-
-          {/* Debug info - remover em produção */}
-          {formData.photo && (
-            <div className="text-xs text-green-600 bg-green-50 p-2 rounded">✅ Foto carregada e pronta para salvar</div>
-          )}
 
           {/* Nota informativa */}
           <div className="text-center text-sm text-slate-500 bg-slate-50 p-4 rounded-lg border border-slate-200">

@@ -292,14 +292,11 @@ export function BarcodeScanner({ onBarcodeScanned }: BarcodeScannerProps) {
 
       {/* Info */}
       <div className="text-center text-slate-600 space-y-3">
-        <div className="flex items-center justify-center gap-2">
-          <ScanLine className="w-4 h-4 text-blue-600" />
-          <span className="font-medium">Scanner Profissional</span>
-        </div>
+        
         <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
           <p className="font-medium text-slate-700 mb-2">📋 Instruções de Uso:</p>
           <div className="text-sm space-y-1 text-left">
-            <p>• Mantenha o código bem iluminado e limpo</p>
+            
             <p>• Posicione dentro da área azul destacada</p>
             <p>• Mantenha o dispositivo estável durante o scan</p>
             <p>• Compatível com EAN-13, EAN-8, UPC, Code 128 e Code 39</p>

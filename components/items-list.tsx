@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Trash2, Package, Tag, Calendar, Edit, Save, X } from "lucide-react"
-import { PhotoCapture } from "@/components/photo-capture"
 import type { ScannedItem } from "@/app/page"
 
 interface ItemsListProps {
@@ -60,7 +59,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
     ageRange: "",
     category: "",
     toyType: "",
-    photo: "",
   })
   const [isLoading, setIsLoading] = useState(false)
 
@@ -87,7 +85,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
       ageRange: item.ageRange || "",
       category: item.category || "",
       toyType: item.toyType || "",
-      photo: item.photo || "",
     })
   }
 
@@ -106,7 +103,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
       ageRange: editForm.ageRange || undefined,
       category: editForm.category || undefined,
       toyType: editForm.toyType || undefined,
-      photo: editForm.photo || undefined,
     }
 
     await new Promise((resolve) => setTimeout(resolve, 500))
@@ -125,16 +121,11 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
       ageRange: "",
       category: "",
       toyType: "",
-      photo: "",
     })
   }
 
   const updateEditForm = (field: string, value: string) => {
     setEditForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handlePhotoCapture = (photo: string) => {
-    updateEditForm("photo", photo)
   }
 
   return (
@@ -180,17 +171,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   </div>
                 </div>
 
-                {/* Photo Preview */}
-                {item.photo && (
-                  <div className="mt-3">
-                    <img
-                      src={item.photo || "/placeholder.svg"}
-                      alt={item.name}
-                      className="w-full h-32 object-cover rounded-lg border border-slate-200"
-                    />
-                  </div>
-                )}
-
                 {/* Info básica */}
                 <div className="space-y-2 text-sm">
                   {item.price && (
@@ -233,7 +213,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50">
-              <TableHead className="font-semibold text-slate-700">Foto</TableHead>
               <TableHead className="font-semibold text-slate-700">Produto</TableHead>
               <TableHead className="font-semibold text-slate-700">Marca</TableHead>
               <TableHead className="font-semibold text-slate-700">Preço</TableHead>
@@ -245,19 +224,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
           <TableBody>
             {items.map((item) => (
               <TableRow key={item.id} className="hover:bg-slate-50">
-                <TableCell className="w-20">
-                  {item.photo ? (
-                    <img
-                      src={item.photo || "/placeholder.svg"}
-                      alt={item.name}
-                      className="w-16 h-16 object-cover rounded-lg border border-slate-200"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center">
-                      <Package className="w-6 h-6 text-slate-400" />
-                    </div>
-                  )}
-                </TableCell>
                 <TableCell>
                   <div>
                     <div className="font-medium text-slate-800">{item.name}</div>
@@ -454,11 +420,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-
-                {/* Foto */}
-                <div className="space-y-4 pt-4 border-t border-slate-200">
-                  <PhotoCapture onPhotoCapture={handlePhotoCapture} currentPhoto={editForm.photo} />
                 </div>
               </div>
 
