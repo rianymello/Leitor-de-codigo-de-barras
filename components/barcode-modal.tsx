@@ -21,36 +21,53 @@ interface BarcodeModalProps {
   onSave: (item: ScannedItem) => void
 }
 
-const AGE_RANGES = ["0-2 anos", "3-5 anos", "6-8 anos", "9-12 anos", "13+ anos", "Todas as idades"]
+const AGE_RANGES = [
+  "1+",
+  "2+",
+  "3+", 
+  "4+", 
+  "5+",
+  "6+",
+  "7+",
+  "8+",
+  ]
 
 const CATEGORIES = [
-  "Brinquedos e Jogos",
-  "Eletrônicos",
-  "Casa e Decoração",
-  "Roupas e Acessórios",
-  "Esportes e Lazer",
-  "Livros e Mídia",
-  "Saúde e Beleza",
-  "Alimentação",
-  "Ferramentas",
-  "Automotivo",
-  "Pet Shop",
-  "Outros",
+  "Brinquedos em madeira",
+  "Brinquedos para bebés",
+  "Brinquedos para crianças",
+  "Ciência e descobrimentos",
+  "Figuras de ação",
+  "Instrumentos musicais",
+  "Jogos e puzzles",
+  "Jogos educativos",
+  "Matraquilhos e bilhares",
+  "Peluches",
+  "Personagens TV",
+  "Pistas e circuitos",
+  "Plasticinas",
+  "Radio control",
+  "Veículos e carrinhos",
+  "Pistolas e dardos",
+  "Primeiros-passos e cavalgáveis",
+  "Bonecas",
+  "Blocos de construção",
+  "Brinquedos de imitação",
+  "Menina (disfarce)",
+  "Menino (disfarce)",
+  "Biquínis",
+  "Calções de banho",
+  "Piscinas",
+  "Toalhas",
+  "Estojos",
+  "Mochilas"
 ]
 
 const PRODUCT_TYPES = [
   "Brinquedo",
-  "Eletrônico",
-  "Acessório",
-  "Ferramenta",
-  "Livro",
-  "Roupa",
-  "Calçado",
-  "Decoração",
-  "Utensílio",
-  "Equipamento",
-  "Consumível",
-  "Outro",
+  "Disfarces",
+  "Verão",
+  "Material Escolar",
 ]
 
 export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalProps) {
