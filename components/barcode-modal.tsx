@@ -25,6 +25,7 @@ const AGE_RANGES = [
   "0+ meses",
   "3+ meses",
   "6+ meses",
+  "10+ meses",
   "1+",
   "2+",
   "3+", 
