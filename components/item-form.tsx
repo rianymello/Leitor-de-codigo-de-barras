@@ -39,6 +39,7 @@ export function ItemForm({ barcode, onItemSaved, onCancel }: ItemFormProps) {
       scannedAt: new Date().toISOString(),
     }
 
+    // Simular um pequeno delay para melhor UX
     await new Promise((resolve) => setTimeout(resolve, 500))
 
     onItemSaved(item)
@@ -77,7 +78,7 @@ export function ItemForm({ barcode, onItemSaved, onCancel }: ItemFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="price">Preço (€)</Label>
+          <Label htmlFor="price">Preço (R$)</Label>
           <Input
             id="price"
             type="number"
@@ -104,7 +105,7 @@ export function ItemForm({ barcode, onItemSaved, onCancel }: ItemFormProps) {
             variant="outline"
             onClick={onCancel}
             disabled={isLoading}
-            className="flex items-center justify-center gap-2 py-3 text-base sm:w-auto bg-transparent"
+            className="flex items-center justify-center gap-2 py-3 text-base sm:w-auto"
           >
             <X className="w-4 h-4" />
             Cancelar

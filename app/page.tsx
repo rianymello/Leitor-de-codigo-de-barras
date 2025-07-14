@@ -30,6 +30,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
+    // Carregar itens do localStorage
     const savedItems = localStorage.getItem("inventoryItems")
     if (savedItems) {
       setItems(JSON.parse(savedItems))
@@ -66,6 +67,7 @@ export default function Home() {
     try {
       const XLSX = await import("xlsx")
 
+      // Preparar dados
       const worksheetData = items.map((item) => ({
         "Código Completo": item.fullBarcode,
         "Últimos 6 Dígitos": item.lastSixDigits,
@@ -79,22 +81,25 @@ export default function Home() {
         "Data de Cadastro": new Date(item.scannedAt).toLocaleString("pt-BR"),
       }))
 
+      // Criar worksheet
       const worksheet = XLSX.utils.json_to_sheet(worksheetData)
 
+      // Configurar larguras das colunas
       const columnWidths = [
-        { wch: 15 },
-        { wch: 12 },
-        { wch: 30 },
-        { wch: 15 },
-        { wch: 12 },
-        { wch: 10 },
-        { wch: 15 },
-        { wch: 20 },
-        { wch: 15 },
-        { wch: 20 },
+        { wch: 15 }, // Código Completo
+        { wch: 12 }, // Últimos 6 Dígitos
+        { wch: 30 }, // Nome do Produto
+        { wch: 15 }, // Marca
+        { wch: 12 }, // Preço
+        { wch: 10 }, // Peso
+        { wch: 15 }, // Faixa Etária
+        { wch: 20 }, // Categoria
+        { wch: 15 }, // Tipo de Produto
+        { wch: 20 }, // Data de Cadastro
       ]
       worksheet["!cols"] = columnWidths
 
+      // Criar workbook
       const workbook = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(workbook, worksheet, "Inventário")
       XLSX.writeFile(workbook, `inventario-${new Date().toISOString().split("T")[0]}.xlsx`)
@@ -109,13 +114,19 @@ export default function Home() {
     setScannedBarcode("")
   }
 
+  const totalValue = items.reduce((sum, item) => sum + (item.price || 0), 0)
+  const itemsWithPrice = items.filter((item) => item.price && item.price > 0)
+
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Header Profissional */}
       <div className="bg-white border-b border-slate-200 shadow-sm">
         <div className="container mx-auto max-w-7xl px-4 py-6">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Sistema de Inventário</h1>
-            <p className="text-slate-600 mt-1">Gestão de produtos e estoque</p>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Sistema de Inventário</h1>
+              <p className="text-slate-600 mt-1">Gestão de produtos e estoque</p>
+            </div>
           </div>
         </div>
       </div>

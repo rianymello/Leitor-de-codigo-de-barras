@@ -138,12 +138,13 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
 
   return (
     <div className="space-y-6">
-      {/* Mobile view */}
+      {/* Mobile view - Cards Simples */}
       <div className="block lg:hidden space-y-4">
         {items.map((item) => (
           <Card key={item.id} className="shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="space-y-3">
+                {/* Header */}
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg text-slate-800 leading-tight">{item.name}</h3>
@@ -178,6 +179,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   </div>
                 </div>
 
+                {/* Info básica */}
                 <div className="space-y-2 text-sm">
                   {item.price && (
                     <div className="flex items-center gap-2">
@@ -205,6 +207,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   </div>
                 </div>
 
+                {/* Código */}
                 <div className="pt-2 border-t border-slate-100">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-500">Código:</span>
@@ -217,7 +220,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
         ))}
       </div>
 
-      {/* Desktop view */}
+      {/* Desktop view - Table Simples */}
       <div className="hidden lg:block border rounded-lg overflow-hidden shadow-sm">
         <Table>
           <TableHeader>
@@ -297,7 +300,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
         </Table>
       </div>
 
-      {/* Edit Modal */}
+      {/* Modal de Edição */}
       <Dialog open={!!editingItem} onOpenChange={() => !isLoading && handleCancelEdit()}>
         <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-auto">
           <DialogHeader>
@@ -312,6 +315,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
 
           {editingItem && (
             <div className="space-y-6">
+              {/* Código do produto */}
               <Card className="bg-slate-50 border-slate-200">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -322,6 +326,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
               </Card>
 
               <div className="space-y-4">
+                {/* Nome */}
                 <div className="space-y-2">
                   <Label htmlFor="edit-name" className="text-base font-medium">
                     Nome do Produto
@@ -337,6 +342,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   />
                 </div>
 
+                {/* Marca e Preço */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-brand" className="text-base">
@@ -373,6 +379,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   </div>
                 </div>
 
+                {/* Peso */}
                 <div className="space-y-2">
                   <Label htmlFor="edit-weight" className="flex items-center gap-2 text-base">
                     <Weight className="w-4 h-4 text-slate-500" />
@@ -392,6 +399,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   />
                 </div>
 
+                {/* Categoria e Tipo */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-base">Categoria</Label>
@@ -434,6 +442,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   </div>
                 </div>
 
+                {/* Faixa Etária */}
                 <div className="space-y-2">
                   <Label className="text-base">Faixa Etária</Label>
                   <Select
@@ -455,6 +464,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                 </div>
               </div>
 
+              {/* Botões */}
               <div className="flex flex-col gap-3 pt-6 border-t border-slate-200">
                 <Button
                   onClick={handleSaveEdit}
