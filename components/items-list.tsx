@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Trash2, Package, Tag, Calendar, Edit, Save, X } from "lucide-react"
+import { Trash2, Package, Tag, Calendar, Edit, Save, X, Euro, Weight } from "lucide-react"
 import type { ScannedItem } from "@/app/page"
 
 interface ItemsListProps {
@@ -18,37 +18,40 @@ interface ItemsListProps {
   onUpdateItem?: (item: ScannedItem) => void
 }
 
-const AGE_RANGES = ["0-2 anos", "3-5 anos", "6-8 anos", "9-12 anos", "13+ anos", "Todas as idades"]
+const AGE_RANGES = ["0+ meses", "3+ meses", "6+ meses", "10+ meses", "1+", "2+", "3+", "4+", "5+", "6+", "7+", "8+"]
 
 const CATEGORIES = [
-  "Brinquedos e Jogos",
-  "Eletrônicos",
-  "Casa e Decoração",
-  "Roupas e Acessórios",
-  "Esportes e Lazer",
-  "Livros e Mídia",
-  "Saúde e Beleza",
-  "Alimentação",
-  "Ferramentas",
-  "Automotivo",
-  "Pet Shop",
-  "Outros",
+  "Brinquedos em madeira",
+  "Brinquedos para bebés",
+  "Brinquedos para crianças",
+  "Ciência e descobrimentos",
+  "Figuras de ação",
+  "Instrumentos musicais",
+  "Jogos e puzzles",
+  "Jogos educativos",
+  "Matraquilhos e bilhares",
+  "Peluches",
+  "Personagens TV",
+  "Pistas e circuitos",
+  "Plasticinas",
+  "Radio control",
+  "Veículos e carrinhos",
+  "Pistolas e dardos",
+  "Primeiros-passos e cavalgáveis",
+  "Bonecas",
+  "Blocos de construção",
+  "Brinquedos de imitação",
+  "Menina (disfarce)",
+  "Menino (disfarce)",
+  "Biquínis",
+  "Calções de banho",
+  "Piscinas",
+  "Toalhas",
+  "Estojos",
+  "Mochilas",
 ]
 
-const PRODUCT_TYPES = [
-  "Brinquedo",
-  "Eletrônico",
-  "Acessório",
-  "Ferramenta",
-  "Livro",
-  "Roupa",
-  "Calçado",
-  "Decoração",
-  "Utensílio",
-  "Equipamento",
-  "Consumível",
-  "Outro",
-]
+const PRODUCT_TYPES = ["Brinquedo", "Disfarces", "Verão", "Material Escolar"]
 
 export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps) {
   const [editingItem, setEditingItem] = useState<ScannedItem | null>(null)
@@ -56,6 +59,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
     name: "",
     brand: "",
     price: "",
+    weight: "",
     ageRange: "",
     category: "",
     toyType: "",
@@ -82,6 +86,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
       name: item.name,
       brand: item.brand || "",
       price: item.price ? item.price.toString() : "",
+      weight: item.weight ? item.weight.toString() : "",
       ageRange: item.ageRange || "",
       category: item.category || "",
       toyType: item.toyType || "",
@@ -94,12 +99,14 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
     setIsLoading(true)
 
     const normalizedPrice = editForm.price ? editForm.price.replace(",", ".") : ""
+    const normalizedWeight = editForm.weight ? editForm.weight.replace(",", ".") : ""
 
     const updatedItem: ScannedItem = {
       ...editingItem,
       name: editForm.name.trim() || editingItem.name,
       brand: editForm.brand.trim() || undefined,
       price: normalizedPrice ? Number.parseFloat(normalizedPrice) : undefined,
+      weight: normalizedWeight ? Number.parseFloat(normalizedWeight) : undefined,
       ageRange: editForm.ageRange || undefined,
       category: editForm.category || undefined,
       toyType: editForm.toyType || undefined,
@@ -118,6 +125,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
       name: "",
       brand: "",
       price: "",
+      weight: "",
       ageRange: "",
       category: "",
       toyType: "",
@@ -130,13 +138,12 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
 
   return (
     <div className="space-y-6">
-      {/* Mobile view - Cards Simples */}
+      {/* Mobile view */}
       <div className="block lg:hidden space-y-4">
         {items.map((item) => (
           <Card key={item.id} className="shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="space-y-3">
-                {/* Header */}
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg text-slate-800 leading-tight">{item.name}</h3>
@@ -171,14 +178,17 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   </div>
                 </div>
 
-                {/* Info básica */}
                 <div className="space-y-2 text-sm">
                   {item.price && (
                     <div className="flex items-center gap-2">
                       <span className="text-slate-600">Preço:</span>
-                      <Badge className="bg-green-100 text-green-800 font-mono text-sm">
-                        R$ {item.price.toFixed(2)}
-                      </Badge>
+                      <Badge className="bg-green-100 text-green-800 font-mono text-sm">€ {item.price.toFixed(2)}</Badge>
+                    </div>
+                  )}
+                  {item.weight && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-600">Peso:</span>
+                      <Badge className="bg-blue-100 text-blue-800 font-mono text-sm">{item.weight}g</Badge>
                     </div>
                   )}
                   {item.category && (
@@ -195,7 +205,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   </div>
                 </div>
 
-                {/* Código */}
                 <div className="pt-2 border-t border-slate-100">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-500">Código:</span>
@@ -208,7 +217,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
         ))}
       </div>
 
-      {/* Desktop view - Table Simples */}
+      {/* Desktop view */}
       <div className="hidden lg:block border rounded-lg overflow-hidden shadow-sm">
         <Table>
           <TableHeader>
@@ -216,6 +225,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
               <TableHead className="font-semibold text-slate-700">Produto</TableHead>
               <TableHead className="font-semibold text-slate-700">Marca</TableHead>
               <TableHead className="font-semibold text-slate-700">Preço</TableHead>
+              <TableHead className="font-semibold text-slate-700">Peso</TableHead>
               <TableHead className="font-semibold text-slate-700">Categoria</TableHead>
               <TableHead className="font-semibold text-slate-700">Data</TableHead>
               <TableHead className="w-[120px] font-semibold text-slate-700">Ações</TableHead>
@@ -239,7 +249,14 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                 </TableCell>
                 <TableCell>
                   {item.price ? (
-                    <Badge className="bg-green-100 text-green-800 font-mono">R$ {item.price.toFixed(2)}</Badge>
+                    <Badge className="bg-green-100 text-green-800 font-mono">€ {item.price.toFixed(2)}</Badge>
+                  ) : (
+                    <span className="text-slate-400 text-sm italic">Não informado</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {item.weight ? (
+                    <Badge className="bg-blue-100 text-blue-800 font-mono">{item.weight}g</Badge>
                   ) : (
                     <span className="text-slate-400 text-sm italic">Não informado</span>
                   )}
@@ -280,7 +297,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
         </Table>
       </div>
 
-      {/* Modal de Edição */}
+      {/* Edit Modal */}
       <Dialog open={!!editingItem} onOpenChange={() => !isLoading && handleCancelEdit()}>
         <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-auto">
           <DialogHeader>
@@ -295,7 +312,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
 
           {editingItem && (
             <div className="space-y-6">
-              {/* Código do produto */}
               <Card className="bg-slate-50 border-slate-200">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -306,7 +322,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
               </Card>
 
               <div className="space-y-4">
-                {/* Nome */}
                 <div className="space-y-2">
                   <Label htmlFor="edit-name" className="text-base font-medium">
                     Nome do Produto
@@ -322,7 +337,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   />
                 </div>
 
-                {/* Marca e Preço */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-brand" className="text-base">
@@ -340,8 +354,9 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="edit-price" className="text-base">
-                      Preço (R$)
+                    <Label htmlFor="edit-price" className="flex items-center gap-2 text-base">
+                      <Euro className="w-4 h-4 text-slate-500" />
+                      Preço (€)
                     </Label>
                     <Input
                       id="edit-price"
@@ -358,7 +373,25 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   </div>
                 </div>
 
-                {/* Categoria e Tipo */}
+                <div className="space-y-2">
+                  <Label htmlFor="edit-weight" className="flex items-center gap-2 text-base">
+                    <Weight className="w-4 h-4 text-slate-500" />
+                    Peso (gramas)
+                  </Label>
+                  <Input
+                    id="edit-weight"
+                    type="text"
+                    placeholder="Ex: 250 ou 1500"
+                    value={editForm.weight}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^\d.,]/g, "")
+                      updateEditForm("weight", value)
+                    }}
+                    className="text-base py-3 px-4"
+                    disabled={isLoading}
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-base">Categoria</Label>
@@ -401,7 +434,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   </div>
                 </div>
 
-                {/* Faixa Etária */}
                 <div className="space-y-2">
                   <Label className="text-base">Faixa Etária</Label>
                   <Select
@@ -423,7 +455,6 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                 </div>
               </div>
 
-              {/* Botões */}
               <div className="flex flex-col gap-3 pt-6 border-t border-slate-200">
                 <Button
                   onClick={handleSaveEdit}
@@ -448,7 +479,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   variant="outline"
                   onClick={handleCancelEdit}
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center gap-2 py-4 text-base font-medium border-2"
+                  className="w-full flex items-center justify-center gap-2 py-4 text-base font-medium border-2 bg-transparent"
                 >
                   <X className="w-5 h-5" />
                   Cancelar

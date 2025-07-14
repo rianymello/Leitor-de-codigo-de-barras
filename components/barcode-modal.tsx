@@ -10,9 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Save, X, Barcode, Package, DollarSign, Tag, Users, Grid3X3, Gamepad2, AlertCircle } from "lucide-react"
+import { Save, X, Barcode, Package, Euro, Tag, Users, Grid3X3, Gamepad2, AlertCircle, Weight } from "lucide-react"
 import type { ScannedItem } from "@/app/page"
-// import { PhotoCapture } from "@/components/photo-capture" // Removed
 
 interface BarcodeModalProps {
   isOpen: boolean
@@ -21,20 +20,7 @@ interface BarcodeModalProps {
   onSave: (item: ScannedItem) => void
 }
 
-const AGE_RANGES = [
-  "0+ meses",
-  "3+ meses",
-  "6+ meses",
-  "10+ meses",
-  "1+",
-  "2+",
-  "3+", 
-  "4+", 
-  "5+",
-  "6+",
-  "7+",
-  "8+",
-  ]
+const AGE_RANGES = ["0+ meses", "3+ meses", "6+ meses", "10+ meses", "1+", "2+", "3+", "4+", "5+", "6+", "7+", "8+"]
 
 const CATEGORIES = [
   "Brinquedos em madeira",
@@ -64,21 +50,17 @@ const CATEGORIES = [
   "Piscinas",
   "Toalhas",
   "Estojos",
-  "Mochilas"
+  "Mochilas",
 ]
 
-const PRODUCT_TYPES = [
-  "Brinquedo",
-  "Disfarces",
-  "Verão",
-  "Material Escolar",
-]
+const PRODUCT_TYPES = ["Brinquedo", "Disfarces", "Verão", "Material Escolar"]
 
 export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     brand: "",
     price: "",
+    weight: "",
     ageRange: "",
     category: "",
     toyType: "",
@@ -87,10 +69,10 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
     setIsLoading(true)
 
     const normalizedPrice = formData.price ? formData.price.replace(",", ".") : ""
+    const normalizedWeight = formData.weight ? formData.weight.replace(",", ".") : ""
 
     const item: ScannedItem = {
       id: Date.now().toString(),
@@ -99,23 +81,21 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
       name: formData.name.trim() || `Produto ${barcode.slice(-6)}`,
       brand: formData.brand.trim() || undefined,
       price: normalizedPrice ? Number.parseFloat(normalizedPrice) : undefined,
+      weight: normalizedWeight ? Number.parseFloat(normalizedWeight) : undefined,
       ageRange: formData.ageRange || undefined,
       category: formData.category || undefined,
       toyType: formData.toyType || undefined,
       scannedAt: new Date().toISOString(),
     }
 
-    console.log("Item final a ser salvo:", item)
-
     await new Promise((resolve) => setTimeout(resolve, 600))
-
     onSave(item)
 
-    // Limpar formulário
     setFormData({
       name: "",
       brand: "",
       price: "",
+      weight: "",
       ageRange: "",
       category: "",
       toyType: "",
@@ -129,6 +109,7 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
         name: "",
         brand: "",
         price: "",
+        weight: "",
         ageRange: "",
         category: "",
         toyType: "",
@@ -138,7 +119,6 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
   }
 
   const updateFormData = (field: string, value: string) => {
-    console.log(`Atualizando campo ${field}:`, value)
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -156,7 +136,6 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Informações do código */}
           <Card className="bg-slate-50 border-slate-200">
             <CardContent className="pt-4">
               <div className="space-y-3">
@@ -164,7 +143,6 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
                   <Barcode className="w-4 h-4 text-slate-600" />
                   <span className="text-sm font-medium text-slate-700">Código Escaneado</span>
                 </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <p className="text-xs text-slate-500 mb-1">Código Completo:</p>
@@ -172,7 +150,6 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
                       {barcode}
                     </Badge>
                   </div>
-
                   <div>
                     <p className="text-xs text-slate-500 mb-1">Últimos 6 Dígitos:</p>
                     <Badge className="font-mono text-sm bg-slate-600 w-full justify-center">{barcode.slice(-6)}</Badge>
@@ -182,15 +159,12 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
             </CardContent>
           </Card>
 
-          {/* Formulário */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Campo obrigatório destacado */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-3">
                 <AlertCircle className="w-4 h-4 text-blue-600" />
                 <span className="text-sm font-medium text-blue-800">Campo Obrigatório</span>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="name" className="flex items-center gap-2 text-base font-medium">
                   <Package className="w-4 h-4 text-blue-600" />
@@ -210,14 +184,12 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
               </div>
             </div>
 
-            {/* Campos opcionais */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-sm font-medium text-slate-600">Informações Adicionais (Opcionais)</span>
                 <div className="flex-1 h-px bg-slate-200"></div>
               </div>
 
-              {/* Marca e Preço */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="brand" className="flex items-center gap-2 text-base">
@@ -237,8 +209,8 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
 
                 <div className="space-y-2">
                   <Label htmlFor="price" className="flex items-center gap-2 text-base">
-                    <DollarSign className="w-4 h-4 text-slate-500" />
-                    Preço (R$)
+                    <Euro className="w-4 h-4 text-slate-500" />
+                    Preço (€)
                   </Label>
                   <Input
                     id="price"
@@ -255,7 +227,25 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
                 </div>
               </div>
 
-              {/* Faixa Etária e Categoria */}
+              <div className="space-y-2">
+                <Label htmlFor="weight" className="flex items-center gap-2 text-base">
+                  <Weight className="w-4 h-4 text-slate-500" />
+                  Peso (gramas)
+                </Label>
+                <Input
+                  id="weight"
+                  type="text"
+                  placeholder="Ex: 250 ou 1500"
+                  value={formData.weight}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^\d.,]/g, "")
+                    updateFormData("weight", value)
+                  }}
+                  className="text-base py-3 px-4"
+                  disabled={isLoading}
+                />
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2 text-base">
@@ -304,7 +294,6 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
                 </div>
               </div>
 
-              {/* Tipo de Produto */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-base">
                   <Gamepad2 className="w-4 h-4 text-slate-500" />
@@ -329,7 +318,6 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
               </div>
             </div>
 
-            {/* Botões */}
             <div className="flex flex-col gap-3 pt-6 border-t border-slate-200">
               <Button
                 type="submit"
@@ -355,7 +343,7 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
                 variant="outline"
                 onClick={handleClose}
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 py-4 text-base font-medium border-2"
+                className="w-full flex items-center justify-center gap-2 py-4 text-base font-medium border-2 bg-transparent"
               >
                 <X className="w-5 h-5" />
                 Cancelar
@@ -363,7 +351,6 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
             </div>
           </form>
 
-          {/* Nota informativa */}
           <div className="text-center text-sm text-slate-500 bg-slate-50 p-4 rounded-lg border border-slate-200">
             <p className="font-medium text-slate-700 mb-1">💡 Dica Profissional</p>
             <p>
