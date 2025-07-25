@@ -33,9 +33,13 @@ export default function Home() {
 
   useEffect(() => {
     // Carregar itens do localStorage
-    const savedItems = localStorage.getItem("inventoryItems")
-    if (savedItems) {
-      setItems(JSON.parse(savedItems))
+    try {
+      const savedItems = localStorage.getItem("inventoryItems")
+      if (savedItems) {
+        setItems(JSON.parse(savedItems))
+      }
+    } catch (error) {
+      console.error("Erro ao carregar itens:", error)
     }
   }, [])
 
@@ -45,63 +49,78 @@ export default function Home() {
   }
 
   const handleItemSaved = (item: ScannedItem) => {
-    const updatedItems = [...items, item]
-    setItems(updatedItems)
-    localStorage.setItem("inventoryItems", JSON.stringify(updatedItems))
-    setScannedBarcode("")
-    setShowModal(false)
-    setActiveTab("items")
+    try {
+      const updatedItems = [...items, item]
+      setItems(updatedItems)
+      localStorage.setItem("inventoryItems", JSON.stringify(updatedItems))
+      setScannedBarcode("")
+      setShowModal(false)
+      setActiveTab("items")
+    } catch (error) {
+      console.error("Erro ao salvar item:", error)
+      alert("Erro ao salvar o produto. Tente novamente.")
+    }
   }
 
   const handleDeleteItem = (id: string) => {
-    const updatedItems = items.filter((item) => item.id !== id)
-    setItems(updatedItems)
-    localStorage.setItem("inventoryItems", JSON.stringify(updatedItems))
+    try {
+      const updatedItems = items.filter((item) => item.id !== id)
+      setItems(updatedItems)
+      localStorage.setItem("inventoryItems", JSON.stringify(updatedItems))
+    } catch (error) {
+      console.error("Erro ao deletar item:", error)
+      alert("Erro ao deletar o produto. Tente novamente.")
+    }
   }
 
   const handleUpdateItem = (updatedItem: ScannedItem) => {
-    const updatedItems = items.map((item) => (item.id === updatedItem.id ? updatedItem : item))
-    setItems(updatedItems)
-    localStorage.setItem("inventoryItems", JSON.stringify(updatedItems))
+    try {
+      const updatedItems = items.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+      setItems(updatedItems)
+      localStorage.setItem("inventoryItems", JSON.stringify(updatedItems))
+    } catch (error) {
+      console.error("Erro ao atualizar item:", error)
+      alert("Erro ao atualizar o produto. Tente novamente.")
+    }
   }
 
   const exportToExcel = async () => {
     try {
       const XLSX = await import("xlsx")
 
-      // Preparar dados com as novas nomenclaturas
+      // Preparar dados na ordem específica solicitada
       const worksheetData = items.map((item) => ({
-        "Código Completo": item.fullBarcode,
-        "Últimos 6 Dígitos": item.lastSixDigits,
+        CODIGOBARRAS: item.fullBarcode,
+        REFERENCIA: item.lastSixDigits,
         DESCRICAO: item.name,
         DESCRICAOSITE: item.siteDescription || item.name,
-        Marca: item.brand || "Não informado",
+        MARCA: item.brand || "Não informado",
         PVP1: item.price ? item.price.toFixed(2).replace(".", ",") : "Não informado",
-        Peso: item.weight ? item.weight.toFixed(2).replace(".", ",") : "Não informado",
+        FAIXAETARIA: item.ageRange || "Não informado",
+        CATEGORIA: item.category || "Não informado",
         UNIDADE: item.unit || "UN",
-        "Faixa Etária": item.ageRange || "Não informado",
-        Categoria: item.category || "Não informado",
-        "Tipo de Produto": item.toyType || "Não informado",
-        "Data de Cadastro": new Date(item.scannedAt).toLocaleString("pt-BR"),
+        FAMILIA: item.toyType || "Não informado",
+        PESO: item.weight ? item.weight.toFixed(2).replace(".", ",") : "Não informado",
+        ONLINE: "SIM", // Campo padrão para indicar disponibilidade online
       }))
 
       // Criar worksheet
       const worksheet = XLSX.utils.json_to_sheet(worksheetData)
 
-      // Configurar larguras das colunas
+      // Configurar larguras das colunas na nova ordem
       const columnWidths = [
-        { wch: 15 }, // Código Completo
-        { wch: 12 }, // Últimos 6 Dígitos
+        { wch: 15 }, // CODIGOBARRAS
+        { wch: 12 }, // REFERENCIA
         { wch: 30 }, // DESCRICAO
         { wch: 30 }, // DESCRICAOSITE
-        { wch: 15 }, // Marca
+        { wch: 15 }, // MARCA
         { wch: 12 }, // PVP1
-        { wch: 10 }, // Peso
+        { wch: 15 }, // FAIXAETARIA
+        { wch: 20 }, // CATEGORIA
         { wch: 10 }, // UNIDADE
-        { wch: 15 }, // Faixa Etária
-        { wch: 20 }, // Categoria
-        { wch: 15 }, // Tipo de Produto
-        { wch: 20 }, // Data de Cadastro
+        { wch: 15 }, // FAMILIA
+        { wch: 10 }, // PESO
+        { wch: 8 }, // ONLINE
       ]
       worksheet["!cols"] = columnWidths
 
@@ -119,9 +138,6 @@ export default function Home() {
     setShowModal(false)
     setScannedBarcode("")
   }
-
-  const totalValue = items.reduce((sum, item) => sum + (item.price || 0), 0)
-  const itemsWithPrice = items.filter((item) => item.price && item.price > 0)
 
   return (
     <div className="min-h-screen bg-slate-50">
