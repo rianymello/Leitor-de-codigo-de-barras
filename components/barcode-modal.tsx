@@ -1,16 +1,31 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import type React from "react"
+
+import { useState } from "react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import {
+  Save,
+  X,
+  Barcode,
+  Package,
+  Euro,
+  Tag,
+  Users,
+  Grid3X3,
+  Gamepad2,
+  AlertCircle,
+  Weight,
+  Box,
+  Globe,
+} from "lucide-react"
 import type { ScannedItem } from "@/app/page"
-import { Package, Globe, DollarSign, Weight, Calendar, Tag, Layers } from "lucide-react"
 
 interface BarcodeModalProps {
   isOpen: boolean
@@ -19,37 +34,44 @@ interface BarcodeModalProps {
   onSave: (item: ScannedItem) => void
 }
 
-const categories = [
-  "Brinquedos Educativos",
-  "Bonecas e Acessórios",
-  "Carrinhos e Veículos",
-  "Jogos de Tabuleiro",
-  "Pelúcias",
-  "Blocos de Construção",
-  "Brinquedos Eletrônicos",
-  "Arte e Artesanato",
-  "Esportes e Atividades",
-  "Fantasias e Disfarces",
+const AGE_RANGES = ["0+ meses", "3+ meses", "6+ meses", "10+ meses", "1+", "2+", "3+", "4+", "5+", "6+", "7+", "8+"]
+
+const CATEGORIES = [
+  "Brinquedos em madeira",
+  "Brinquedos para bebés",
+  "Brinquedos para crianças",
+  "Ciência e descobrimentos",
+  "Figuras de ação",
+  "Instrumentos musicais",
+  "Jogos e puzzles",
+  "Jogos educativos",
+  "Matraquilhos e bilhares",
+  "Peluches",
+  "Personagens TV",
+  "Pistas e circuitos",
+  "Plasticinas",
+  "Radio control",
+  "Veículos e carrinhos",
+  "Pistolas e dardos",
+  "Primeiros-passos e cavalgáveis",
+  "Bonecas",
+  "Blocos de construção",
+  "Brinquedos de imitação",
+  "Menina (disfarce)",
+  "Menino (disfarce)",
+  "Biquínis",
+  "Calções de banho",
+  "Piscinas",
+  "Toalhas",
+  "Estojos",
+  "Mochilas",
 ]
 
-const ageRanges = ["0-2 anos", "3-5 anos", "6-8 anos", "9-12 anos", "13+ anos", "Todas as idades"]
+const PRODUCT_TYPES = ["Brinquedo", "Disfarces", "Verão", "Material Escolar"]
 
-const productTypes = [
-  "Brinquedo",
-  "Jogo",
-  "Boneca",
-  "Carrinho",
-  "Pelúcia",
-  "Quebra-cabeça",
-  "Kit Educativo",
-  "Acessório",
-  "Eletrônico",
-  "Esportivo",
-]
-
-const units = [
-  { value: "UN", label: "Unidade" },
-  { value: "CX", label: "Caixa" },
+const UNITS = [
+  { value: "UN", label: "UN (Unidade)" },
+  { value: "CX", label: "CX (Caixa)" },
 ]
 
 export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalProps) {
@@ -64,12 +86,44 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
     category: "",
     toyType: "",
   })
+  const [isLoading, setIsLoading] = useState(false)
 
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-  useEffect(() => {
-    if (isOpen && barcode) {
-      // Reset form when modal opens
+    if (!formData.name.trim()) {
+      alert("Por favor, preencha a descrição do produto.")
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      // Normalizar preço (converter vírgula para ponto para cálculos internos)
+      const normalizedPrice = formData.price ? formData.price.replace(",", ".") : ""
+      const normalizedWeight = formData.weight ? formData.weight.replace(",", ".") : ""
+
+      const item: ScannedItem = {
+        id: Date.now().toString(),
+        fullBarcode: barcode,
+        lastSixDigits: barcode.slice(-6),
+        name: formData.name.trim(),
+        siteDescription: formData.siteDescription.trim() || undefined,
+        brand: formData.brand.trim() || undefined,
+        price: normalizedPrice ? Number.parseFloat(normalizedPrice) : undefined,
+        weight: normalizedWeight ? Number.parseFloat(normalizedWeight) : undefined,
+        unit: formData.unit || "UN",
+        ageRange: formData.ageRange || undefined,
+        category: formData.category || undefined,
+        toyType: formData.toyType || undefined,
+        scannedAt: new Date().toISOString(),
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 600))
+
+      onSave(item)
+
+      // Limpar formulário
       setFormData({
         name: "",
         siteDescription: "",
@@ -81,290 +135,375 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
         category: "",
         toyType: "",
       })
-      setErrors({})
-    }
-  }, [isOpen, barcode])
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Nome do produto é obrigatório"
-    }
-
-    if (!formData.siteDescription.trim()) {
-      newErrors.siteDescription = "Descrição para o site é obrigatória"
-    }
-
-    if (!formData.brand.trim()) {
-      newErrors.brand = "Marca é obrigatória"
-    }
-
-    if (!formData.price || isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
-      newErrors.price = "Preço deve ser um número válido maior que zero"
-    }
-
-    if (!formData.weight || isNaN(Number(formData.weight)) || Number(formData.weight) <= 0) {
-      newErrors.weight = "Peso deve ser um número válido maior que zero"
-    }
-
-    if (!formData.ageRange) {
-      newErrors.ageRange = "Faixa etária é obrigatória"
-    }
-
-    if (!formData.category) {
-      newErrors.category = "Categoria é obrigatória"
-    }
-
-    if (!formData.toyType) {
-      newErrors.toyType = "Tipo de produto é obrigatório"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSave = () => {
-    if (!validateForm()) {
-      return
-    }
-
-    try {
-      const lastSixDigits = barcode.slice(-6)
-
-      const newItem: ScannedItem = {
-        id: Date.now().toString(),
-        fullBarcode: barcode,
-        lastSixDigits,
-        name: formData.name.trim(),
-        siteDescription: formData.siteDescription.trim(),
-        brand: formData.brand.trim(),
-        price: Number(formData.price),
-        weight: Number(formData.weight),
-        unit: formData.unit,
-        ageRange: formData.ageRange,
-        category: formData.category,
-        toyType: formData.toyType,
-        scannedAt: new Date().toISOString(),
-      }
-
-      onSave(newItem)
     } catch (error) {
       console.error("Erro ao salvar produto:", error)
-      alert("Erro ao salvar o produto. Verifique os dados e tente novamente.")
+      alert("Erro ao salvar produto. Tente novamente.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleClose = () => {
+    if (!isLoading) {
+      setFormData({
+        name: "",
+        siteDescription: "",
+        brand: "",
+        price: "",
+        weight: "",
+        unit: "UN",
+        ageRange: "",
+        category: "",
+        toyType: "",
+      })
+      onClose()
+    }
+  }
+
+  const updateFormData = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }))
-    }
   }
 
-  if (!isOpen) return null
+  const formatPrice = (value: string) => {
+    // Remove tudo exceto números, vírgula e ponto
+    let cleaned = value.replace(/[^\d.,]/g, "")
+
+    // Se tem ponto, converte para vírgula
+    cleaned = cleaned.replace(".", ",")
+
+    // Se tem mais de uma vírgula, mantém apenas a primeira
+    const parts = cleaned.split(",")
+    if (parts.length > 2) {
+      cleaned = parts[0] + "," + parts.slice(1).join("")
+    }
+
+    // Limita a 2 casas decimais após a vírgula
+    if (parts.length === 2 && parts[1].length > 2) {
+      cleaned = parts[0] + "," + parts[1].substring(0, 2)
+    }
+
+    return cleaned
+  }
+
+  const formatWeight = (value: string) => {
+    // Remove tudo exceto números, vírgula e ponto
+    let cleaned = value.replace(/[^\d.,]/g, "")
+
+    // Se tem ponto, converte para vírgula
+    cleaned = cleaned.replace(".", ",")
+
+    // Se tem mais de uma vírgula, mantém apenas a primeira
+    const parts = cleaned.split(",")
+    if (parts.length > 2) {
+      cleaned = parts[0] + "," + parts.slice(1).join("")
+    }
+
+    // Limita a 2 casas decimais após a vírgula
+    if (parts.length === 2 && parts[1].length > 2) {
+      cleaned = parts[0] + "," + parts[1].substring(0, 2)
+    }
+
+    return cleaned
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
+          <DialogTitle className="flex items-center gap-2 text-slate-900 text-xl">
             <Package className="w-5 h-5 text-blue-600" />
-            Cadastrar Produto
+            Cadastro de Produto
           </DialogTitle>
+          <DialogDescription className="text-base">
+            Preencha as informações do produto. Campos opcionais podem ser preenchidos posteriormente.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Código de Barras */}
-          <Card className="bg-slate-50">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">Código de Barras Escaneado</p>
-                  <p className="font-mono text-lg font-semibold">{barcode}</p>
+          {/* Informações do código */}
+          <Card className="bg-slate-50 border-slate-200">
+            <CardContent className="pt-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Barcode className="w-4 h-4 text-slate-600" />
+                  <span className="text-sm font-medium text-slate-700">Código Escaneado</span>
                 </div>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  Ref: {barcode.slice(-6)}
-                </Badge>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Código Completo:</p>
+                    <Badge variant="outline" className="font-mono text-sm px-3 py-1 bg-white w-full justify-center">
+                      {barcode}
+                    </Badge>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Últimos 6 Dígitos:</p>
+                    <Badge className="font-mono text-sm bg-slate-600 w-full justify-center">{barcode.slice(-6)}</Badge>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Nome do Produto */}
-            <div className="space-y-2">
-              <Label htmlFor="name" className="flex items-center gap-2">
-                <Tag className="w-4 h-4" />
-                Nome do Produto *
-              </Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                placeholder="Ex: Boneca Barbie Princesa"
-                className={errors.name ? "border-red-500" : ""}
-              />
-              <p className="text-xs text-slate-500">Nome interno do produto para identificação</p>
-              {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+          {/* Formulário */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Campo obrigatório destacado */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertCircle className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-800">Campo Obrigatório</span>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="name" className="flex items-center gap-2 text-base font-medium">
+                  <Package className="w-4 h-4 text-blue-600" />
+                  DESCRIÇÃO *
+                </Label>
+                <p className="text-xs text-slate-600 mb-2">Nome do produto para uso interno e identificação</p>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Digite o nome do produto"
+                  value={formData.name}
+                  onChange={(e) => updateFormData("name", e.target.value)}
+                  required
+                  className="text-base py-3 px-4 border-2 focus:border-blue-400"
+                  autoFocus
+                  disabled={isLoading}
+                />
+              </div>
             </div>
 
-            {/* Descrição para Site */}
-            <div className="space-y-2">
-              <Label htmlFor="siteDescription" className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-blue-600" />
-                Descrição para Site *
-              </Label>
-              <Input
-                id="siteDescription"
-                value={formData.siteDescription}
-                onChange={(e) => handleInputChange("siteDescription", e.target.value)}
-                placeholder="Ex: Boneca Barbie Princesa dos Sonhos"
-                className={errors.siteDescription ? "border-red-500" : ""}
-              />
-              <p className="text-xs text-blue-600">Nome que aparecerá no site para os clientes</p>
-              {errors.siteDescription && <p className="text-xs text-red-500">{errors.siteDescription}</p>}
+            {/* Campos opcionais */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-sm font-medium text-slate-600">Informações Adicionais (Opcionais)</span>
+                <div className="flex-1 h-px bg-slate-200"></div>
+              </div>
+
+              {/* Descrição do Site */}
+              <div className="space-y-2">
+                <Label htmlFor="siteDescription" className="flex items-center gap-2 text-base">
+                  <Globe className="w-4 h-4 text-slate-500" />
+                  DESCRIÇÃOSITE
+                </Label>
+                <p className="text-xs text-slate-600 mb-2">
+                  Nome do produto que aparecerá no site (visível aos clientes)
+                </p>
+                <Input
+                  id="siteDescription"
+                  type="text"
+                  placeholder="Nome que será exibido no site (opcional)"
+                  value={formData.siteDescription}
+                  onChange={(e) => updateFormData("siteDescription", e.target.value)}
+                  className="text-base py-3 px-4"
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Marca e PVP1 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="brand" className="flex items-center gap-2 text-base">
+                    <Tag className="w-4 h-4 text-slate-500" />
+                    Marca
+                  </Label>
+                  <Input
+                    id="brand"
+                    type="text"
+                    placeholder="Ex: Samsung, Apple, Nike"
+                    value={formData.brand}
+                    onChange={(e) => updateFormData("brand", e.target.value)}
+                    className="text-base py-3 px-4"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="price" className="flex items-center gap-2 text-base">
+                    <Euro className="w-4 h-4 text-slate-500" />
+                    PVP1
+                  </Label>
+                  <Input
+                    id="price"
+                    type="text"
+                    placeholder="Ex: 29,90"
+                    value={formData.price}
+                    onChange={(e) => {
+                      const formatted = formatPrice(e.target.value)
+                      updateFormData("price", formatted)
+                    }}
+                    className="text-base py-3 px-4"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Peso e Unidade */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="weight" className="flex items-center gap-2 text-base">
+                    <Weight className="w-4 h-4 text-slate-500" />
+                    Peso (gramas)
+                  </Label>
+                  <Input
+                    id="weight"
+                    type="text"
+                    placeholder="Ex: 1000,00"
+                    value={formData.weight}
+                    onChange={(e) => {
+                      const formatted = formatWeight(e.target.value)
+                      updateFormData("weight", formatted)
+                    }}
+                    className="text-base py-3 px-4"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-base">
+                    <Box className="w-4 h-4 text-slate-500" />
+                    UNIDADE
+                  </Label>
+                  <Select
+                    value={formData.unit}
+                    onValueChange={(value) => updateFormData("unit", value)}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger className="text-base py-3 px-4">
+                      <SelectValue placeholder="Selecione a unidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {UNITS.map((unit) => (
+                        <SelectItem key={unit.value} value={unit.value} className="text-base">
+                          {unit.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Faixa Etária e Categoria */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-base">
+                    <Users className="w-4 h-4 text-slate-500" />
+                    Faixa Etária
+                  </Label>
+                  <Select
+                    value={formData.ageRange}
+                    onValueChange={(value) => updateFormData("ageRange", value)}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger className="text-base py-3 px-4">
+                      <SelectValue placeholder="Selecione (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {AGE_RANGES.map((age) => (
+                        <SelectItem key={age} value={age} className="text-base">
+                          {age}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-base">
+                    <Grid3X3 className="w-4 h-4 text-slate-500" />
+                    Categoria
+                  </Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) => updateFormData("category", value)}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger className="text-base py-3 px-4">
+                      <SelectValue placeholder="Selecione (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category} className="text-base">
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Tipo de Produto */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base">
+                  <Gamepad2 className="w-4 h-4 text-slate-500" />
+                  Tipo de Produto
+                </Label>
+                <Select
+                  value={formData.toyType}
+                  onValueChange={(value) => updateFormData("toyType", value)}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="text-base py-3 px-4">
+                    <SelectValue placeholder="Selecione (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRODUCT_TYPES.map((type) => (
+                      <SelectItem key={type} value={type} className="text-base">
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Marca */}
-            <div className="space-y-2">
-              <Label htmlFor="brand">Marca *</Label>
-              <Input
-                id="brand"
-                value={formData.brand}
-                onChange={(e) => handleInputChange("brand", e.target.value)}
-                placeholder="Ex: Mattel"
-                className={errors.brand ? "border-red-500" : ""}
-              />
-              {errors.brand && <p className="text-xs text-red-500">{errors.brand}</p>}
+            {/* Botões */}
+            <div className="flex flex-col gap-3 pt-6 border-t border-slate-200">
+              <Button
+                type="submit"
+                disabled={isLoading || !formData.name.trim()}
+                className="w-full flex items-center justify-center gap-2 py-4 text-base font-medium bg-blue-600 hover:bg-blue-700"
+                size="lg"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                    Salvando Produto...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    Salvar Produto
+                  </>
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-2 py-4 text-base font-medium border-2 bg-transparent"
+              >
+                <X className="w-5 h-5" />
+                Cancelar
+              </Button>
             </div>
+          </form>
 
-            {/* Preço */}
-            <div className="space-y-2">
-              <Label htmlFor="price" className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
-                Preço (€) *
-              </Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.price}
-                onChange={(e) => handleInputChange("price", e.target.value)}
-                placeholder="Ex: 29.99"
-                className={errors.price ? "border-red-500" : ""}
-              />
-              {errors.price && <p className="text-xs text-red-500">{errors.price}</p>}
+          {/* Nota informativa atualizada */}
+          <div className="text-center text-sm text-slate-500 bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <p className="font-medium text-slate-700 mb-2">💡 Diferença entre os campos:</p>
+            <div className="text-left space-y-1">
+              <p>
+                <strong>DESCRIÇÃO:</strong> Nome interno do produto para gestão
+              </p>
+              <p>
+                <strong>DESCRIÇÃOSITE:</strong> Nome que aparecerá no site para os clientes
+              </p>
             </div>
-
-            {/* Peso */}
-            <div className="space-y-2">
-              <Label htmlFor="weight" className="flex items-center gap-2">
-                <Weight className="w-4 h-4" />
-                Peso (kg) *
-              </Label>
-              <Input
-                id="weight"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.weight}
-                onChange={(e) => handleInputChange("weight", e.target.value)}
-                placeholder="Ex: 0.5"
-                className={errors.weight ? "border-red-500" : ""}
-              />
-              {errors.weight && <p className="text-xs text-red-500">{errors.weight}</p>}
-            </div>
-
-            {/* Unidade */}
-            <div className="space-y-2">
-              <Label htmlFor="unit">Unidade *</Label>
-              <Select value={formData.unit} onValueChange={(value) => handleInputChange("unit", value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {units.map((unit) => (
-                    <SelectItem key={unit.value} value={unit.value}>
-                      {unit.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Faixa Etária */}
-            <div className="space-y-2">
-              <Label htmlFor="ageRange" className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Faixa Etária *
-              </Label>
-              <Select value={formData.ageRange} onValueChange={(value) => handleInputChange("ageRange", value)}>
-                <SelectTrigger className={errors.ageRange ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Selecione a faixa etária" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ageRanges.map((range) => (
-                    <SelectItem key={range} value={range}>
-                      {range}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.ageRange && <p className="text-xs text-red-500">{errors.ageRange}</p>}
-            </div>
-
-            {/* Categoria */}
-            <div className="space-y-2">
-              <Label htmlFor="category" className="flex items-center gap-2">
-                <Layers className="w-4 h-4" />
-                Categoria *
-              </Label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
-                <SelectTrigger className={errors.category ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
-            </div>
-
-            {/* Tipo de Produto */}
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="toyType">Tipo de Produto *</Label>
-              <Select value={formData.toyType} onValueChange={(value) => handleInputChange("toyType", value)}>
-                <SelectTrigger className={errors.toyType ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Selecione o tipo de produto" />
-                </SelectTrigger>
-                <SelectContent>
-                  {productTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.toyType && <p className="text-xs text-red-500">{errors.toyType}</p>}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Botões */}
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-              Salvar Produto
-            </Button>
           </div>
         </div>
       </DialogContent>

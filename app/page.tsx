@@ -88,39 +88,37 @@ export default function Home() {
     try {
       const XLSX = await import("xlsx")
 
-      // Preparar dados na ordem específica solicitada
+      // Preparar dados com as novas nomenclaturas (sem data de cadastro)
       const worksheetData = items.map((item) => ({
-        CODIGOBARRAS: item.fullBarcode,
-        REFERENCIA: item.lastSixDigits,
+        "Código Completo": item.fullBarcode,
+        "Últimos 6 Dígitos": item.lastSixDigits,
         DESCRICAO: item.name,
         DESCRICAOSITE: item.siteDescription || item.name,
-        MARCA: item.brand || "Não informado",
+        Marca: item.brand || "Não informado",
         PVP1: item.price ? item.price.toFixed(2).replace(".", ",") : "Não informado",
-        FAIXAETARIA: item.ageRange || "Não informado",
-        CATEGORIA: item.category || "Não informado",
+        Peso: item.weight ? item.weight.toFixed(2).replace(".", ",") : "Não informado",
         UNIDADE: item.unit || "UN",
-        FAMILIA: item.toyType || "Não informado",
-        PESO: item.weight ? item.weight.toFixed(2).replace(".", ",") : "Não informado",
-        ONLINE: "SIM", // Campo padrão para indicar disponibilidade online
+        "Faixa Etária": item.ageRange || "Não informado",
+        Categoria: item.category || "Não informado",
+        "Tipo de Produto": item.toyType || "Não informado",
       }))
 
       // Criar worksheet
       const worksheet = XLSX.utils.json_to_sheet(worksheetData)
 
-      // Configurar larguras das colunas na nova ordem
+      // Configurar larguras das colunas (removida a coluna de data)
       const columnWidths = [
-        { wch: 15 }, // CODIGOBARRAS
-        { wch: 12 }, // REFERENCIA
+        { wch: 15 }, // Código Completo
+        { wch: 12 }, // Últimos 6 Dígitos
         { wch: 30 }, // DESCRICAO
         { wch: 30 }, // DESCRICAOSITE
-        { wch: 15 }, // MARCA
+        { wch: 15 }, // Marca
         { wch: 12 }, // PVP1
-        { wch: 15 }, // FAIXAETARIA
-        { wch: 20 }, // CATEGORIA
+        { wch: 10 }, // Peso
         { wch: 10 }, // UNIDADE
-        { wch: 15 }, // FAMILIA
-        { wch: 10 }, // PESO
-        { wch: 8 }, // ONLINE
+        { wch: 15 }, // Faixa Etária
+        { wch: 20 }, // Categoria
+        { wch: 15 }, // Tipo de Produto
       ]
       worksheet["!cols"] = columnWidths
 
