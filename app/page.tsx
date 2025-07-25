@@ -14,9 +14,11 @@ export interface ScannedItem {
   fullBarcode: string
   lastSixDigits: string
   name: string
+  siteDescription?: string
   brand?: string
   price?: number
   weight?: number
+  unit?: string
   ageRange?: string
   category?: string
   toyType?: string
@@ -67,14 +69,16 @@ export default function Home() {
     try {
       const XLSX = await import("xlsx")
 
-      // Preparar dados
+      // Preparar dados com as novas nomenclaturas
       const worksheetData = items.map((item) => ({
         "Código Completo": item.fullBarcode,
         "Últimos 6 Dígitos": item.lastSixDigits,
-        "Nome do Produto": item.name,
+        DESCRICAO: item.name,
+        DESCRICAOSITE: item.siteDescription || item.name,
         Marca: item.brand || "Não informado",
-        Preço: item.price ? `€ ${item.price.toFixed(2)}` : "Não informado",
-        Peso: item.weight ? `${item.weight}g` : "Não informado",
+        PVP1: item.price ? item.price.toFixed(2).replace(".", ",") : "Não informado",
+        Peso: item.weight ? item.weight.toFixed(2).replace(".", ",") : "Não informado",
+        UNIDADE: item.unit || "UN",
         "Faixa Etária": item.ageRange || "Não informado",
         Categoria: item.category || "Não informado",
         "Tipo de Produto": item.toyType || "Não informado",
@@ -88,10 +92,12 @@ export default function Home() {
       const columnWidths = [
         { wch: 15 }, // Código Completo
         { wch: 12 }, // Últimos 6 Dígitos
-        { wch: 30 }, // Nome do Produto
+        { wch: 30 }, // DESCRICAO
+        { wch: 30 }, // DESCRICAOSITE
         { wch: 15 }, // Marca
-        { wch: 12 }, // Preço
+        { wch: 12 }, // PVP1
         { wch: 10 }, // Peso
+        { wch: 10 }, // UNIDADE
         { wch: 15 }, // Faixa Etária
         { wch: 20 }, // Categoria
         { wch: 15 }, // Tipo de Produto

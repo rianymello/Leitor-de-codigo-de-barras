@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Camera, CameraOff, AlertCircle, ScanLine } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Camera, CameraOff, RotateCcw, AlertCircle } from "lucide-react"
 
 interface BarcodeScannerProps {
   onBarcodeScanned: (barcode: string) => void
@@ -11,298 +11,237 @@ interface BarcodeScannerProps {
 
 export function BarcodeScanner({ onBarcodeScanned }: BarcodeScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const scannerRef = useRef<any>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [error, setError] = useState<string>("")
-  const [stream, setStream] = useState<MediaStream | null>(null)
-  const [codeReader, setCodeReader] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Carregar ZXing
   useEffect(() => {
-    let mounted = true
-
-    const loadZXing = async () => {
-      try {
-        console.log("🔄 Carregando ZXing...")
-        const { BrowserMultiFormatReader } = await import("@zxing/library")
-
-        if (mounted) {
-          const reader = new BrowserMultiFormatReader()
-          setCodeReader(reader)
-          console.log("✅ ZXing carregado com sucesso")
-        }
-      } catch (err) {
-        console.error("❌ Erro ao carregar ZXing:", err)
-        if (mounted) {
-          setError("Erro ao carregar o scanner. Recarregue a página.")
-        }
-      }
-    }
-
-    loadZXing()
-
     return () => {
-      mounted = false
+      stopScanner()
     }
   }, [])
 
-  // Função para parar câmera
-  const stopCamera = () => {
-    console.log("🛑 Parando câmera...")
-
-    if (stream) {
-      stream.getTracks().forEach((track) => {
-        track.stop()
-        console.log(`Track ${track.kind} parado`)
-      })
-      setStream(null)
+  const stopScanner = () => {
+    if (scannerRef.current) {
+      scannerRef.current.stop()
+      scannerRef.current = null
     }
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = null
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current = null
     }
-
     setIsScanning(false)
-    setIsLoading(false)
-    setError("")
   }
 
-  // Função para iniciar câmera e scanner
-  const startCamera = async () => {
-    if (!codeReader) {
-      setError("Scanner ainda não está pronto. Aguarde...")
-      return
-    }
-
+  const startScanner = async () => {
     try {
-      setError("")
       setIsLoading(true)
-      console.log("🎥 Iniciando câmera...")
+      setError("")
 
-      // Parar qualquer stream anterior
-      stopCamera()
+      // Importar ZXing dinamicamente
+      const { BrowserMultiFormatReader } = await import("@zxing/library")
 
-      // Configurações da câmera
+      // Parar scanner anterior se existir
+      stopScanner()
+
+      // Configurar constraints da câmera
       const constraints = {
         video: {
           facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { min: 640, ideal: 1280, max: 1920 },
+          height: { min: 480, ideal: 720, max: 1080 },
         },
       }
 
       // Obter stream da câmera
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
-      console.log("✅ Stream da câmera obtido")
+      const stream = await navigator.mediaDevices.getUserMedia(constraints)
+      streamRef.current = stream
 
-      if (!videoRef.current) {
-        mediaStream.getTracks().forEach((track) => track.stop())
-        throw new Error("Elemento de vídeo não encontrado")
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        videoRef.current.autoplay = true
+        videoRef.current.playsInline = true
+
+        // Aguardar o vídeo carregar
+        await new Promise((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = () => resolve(true)
+          }
+        })
+
+        // Aguardar um pouco mais para garantir que o vídeo está pronto
+        await new Promise((resolve) => setTimeout(resolve, 500))
+
+        // Inicializar o scanner
+        const codeReader = new BrowserMultiFormatReader()
+        scannerRef.current = codeReader
+
+        setIsScanning(true)
+        setIsLoading(false)
+
+        // Iniciar a leitura
+        codeReader.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
+          if (result) {
+            const barcode = result.getText()
+            console.log("Código escaneado:", barcode)
+            onBarcodeScanned(barcode)
+            stopScanner()
+          }
+          if (error && !(error.name === "NotFoundException")) {
+            console.error("Erro no scanner:", error)
+          }
+        })
       }
-
-      // Configurar vídeo
-      videoRef.current.srcObject = mediaStream
-      setStream(mediaStream)
-
-      // Aguardar vídeo carregar
-      await new Promise<void>((resolve, reject) => {
-        const video = videoRef.current!
-
-        const onLoaded = () => {
-          video.removeEventListener("loadedmetadata", onLoaded)
-          video.removeEventListener("error", onError)
-          resolve()
-        }
-
-        const onError = () => {
-          video.removeEventListener("loadedmetadata", onLoaded)
-          video.removeEventListener("error", onError)
-          reject(new Error("Erro ao carregar vídeo"))
-        }
-
-        video.addEventListener("loadedmetadata", onLoaded)
-        video.addEventListener("error", onError)
-
-        video.play().catch(reject)
-      })
-
-      console.log("✅ Vídeo carregado, iniciando detecção...")
-      setIsLoading(false)
-      setIsScanning(true)
-
-      // Iniciar detecção
-      startDetection()
     } catch (err: any) {
-      console.error("❌ Erro ao iniciar câmera:", err)
+      console.error("Erro ao iniciar scanner:", err)
       setIsLoading(false)
 
       if (err.name === "NotAllowedError") {
-        setError("Permissão de câmera negada. Permita o acesso e tente novamente.")
+        setError("Acesso à câmera negado. Permita o acesso e tente novamente.")
       } else if (err.name === "NotFoundError") {
-        setError("Câmera não encontrada no dispositivo.")
+        setError("Nenhuma câmera encontrada no dispositivo.")
+      } else if (err.name === "NotSupportedError") {
+        setError("Câmera não suportada neste navegador.")
       } else {
-        setError(`Erro: ${err.message}`)
+        setError("Erro ao acessar a câmera. Verifique as permissões.")
       }
     }
   }
 
-  // Função de detecção
-  const startDetection = async () => {
-    if (!codeReader || !videoRef.current) return
-
-    try {
-      console.log("🔍 Iniciando detecção contínua...")
-
-      await codeReader.decodeFromVideoDevice(undefined, videoRef.current, (result: any, error: any) => {
-        if (result) {
-          console.log("🎯 Código detectado:", result.text)
-
-          // Vibração
-          if ("vibrate" in navigator) {
-            navigator.vibrate([100, 50, 100])
-          }
-
-          // Parar detecção
-          codeReader.reset()
-
-          // Callback
-          onBarcodeScanned(result.text)
-
-          // Parar câmera
-          stopCamera()
-        }
-
-        if (error && error.name !== "NotFoundException") {
-          console.error("Erro na detecção:", error)
-        }
-      })
-    } catch (err) {
-      console.error("❌ Erro na detecção:", err)
-      setError("Erro na detecção de códigos. Tente reiniciar o scanner.")
-    }
+  const retryScanner = () => {
+    stopScanner()
+    setError("")
+    startScanner()
   }
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (codeReader) {
-        codeReader.reset()
-      }
-      stopCamera()
-    }
-  }, [codeReader])
 
   return (
     <div className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      {/* Área do Scanner */}
+      <div className="relative">
+        <Card className="overflow-hidden bg-black">
+          <CardContent className="p-0">
+            <div className="relative aspect-video bg-slate-900 flex items-center justify-center">
+              {!isScanning && !isLoading && !error && (
+                <div className="text-center text-white p-8">
+                  <Camera className="w-16 h-16 mx-auto mb-4 text-slate-400" />
+                  <h3 className="text-xl font-semibold mb-2">Scanner Pronto</h3>
+                  <p className="text-slate-300">Clique em "Iniciar Scanner" para começar</p>
+                </div>
+              )}
 
-      <div className="relative bg-slate-900 rounded-lg overflow-hidden shadow-lg" style={{ aspectRatio: "4/3" }}>
-        {/* Vídeo */}
-        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+              {isLoading && (
+                <div className="text-center text-white p-8">
+                  <div className="animate-spin w-12 h-12 border-4 border-white border-t-transparent rounded-full mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Iniciando Câmera</h3>
+                  <p className="text-slate-300">Aguarde um momento...</p>
+                </div>
+              )}
 
-        {/* Overlay quando escaneando */}
-        {isScanning && (
-          <div className="absolute inset-0">
-            {/* Área de foco */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative">
-                {/* Retângulo de foco */}
-                <div className="border-2 border-blue-500 bg-blue-500/20 rounded-lg w-80 h-36 flex items-center justify-center backdrop-blur-sm">
-                  <div className="text-center text-blue-100">
-                    <ScanLine className="w-6 h-6 mx-auto mb-2 animate-pulse" />
-                    <span className="text-sm font-medium">Posicione o código aqui</span>
+              {error && (
+                <div className="text-center text-white p-8">
+                  <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-400" />
+                  <h3 className="text-xl font-semibold mb-2 text-red-400">Erro na Câmera</h3>
+                  <p className="text-slate-300 mb-4">{error}</p>
+                </div>
+              )}
+
+              {/* Vídeo da câmera */}
+              <video
+                ref={videoRef}
+                className={`w-full h-full object-cover ${isScanning ? "block" : "hidden"}`}
+                playsInline
+                muted
+              />
+
+              {/* Overlay de scan quando ativo */}
+              {isScanning && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Cantos do scanner */}
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-4 border-transparent">
+                    {/* Canto superior esquerdo */}
+                    <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500"></div>
+                    {/* Canto superior direito */}
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500"></div>
+                    {/* Canto inferior esquerdo */}
+                    <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500"></div>
+                    {/* Canto inferior direito */}
+                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500"></div>
+                  </div>
+
+                  {/* Linha de scan animada */}
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64">
+                    <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-blue-500 animate-pulse"></div>
+                  </div>
+
+                  {/* Instruções */}
+                  <div className="absolute bottom-4 left-4 right-4 text-center">
+                    <div className="bg-black bg-opacity-50 rounded-lg p-3">
+                      <p className="text-white text-sm font-medium">
+                        📱 Posicione o código de barras na área destacada
+                      </p>
+                      <p className="text-slate-300 text-xs mt-1">Mantenha boa iluminação e estabilidade</p>
+                    </div>
                   </div>
                 </div>
-
-                {/* Cantos */}
-                <div className="absolute -top-2 -left-2 w-6 h-6 border-l-3 border-t-3 border-blue-500"></div>
-                <div className="absolute -top-2 -right-2 w-6 h-6 border-r-3 border-t-3 border-blue-500"></div>
-                <div className="absolute -bottom-2 -left-2 w-6 h-6 border-l-3 border-b-3 border-blue-500"></div>
-                <div className="absolute -bottom-2 -right-2 w-6 h-6 border-r-3 border-b-3 border-blue-500"></div>
-
-                {/* Linha de scan */}
-                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-blue-500 animate-pulse"></div>
-              </div>
+              )}
             </div>
-
-            {/* Status */}
-            <div className="absolute top-4 left-4 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
-                Escaneando...
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Loading */}
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/90 text-white">
-            <div className="text-center">
-              <div className="animate-spin w-8 h-8 border-2 border-white border-t-transparent rounded-full mx-auto mb-3"></div>
-              <p className="text-lg font-medium">Iniciando Câmera</p>
-              <p className="text-sm opacity-75 mt-1">Preparando scanner...</p>
-            </div>
-          </div>
-        )}
-
-        {/* Estado inicial */}
-        {!isScanning && !isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center text-white">
-            <div className="text-center">
-              <div className="bg-white/10 rounded-full p-4 mb-4 mx-auto w-fit">
-                <Camera className="w-10 h-10 opacity-75" />
-              </div>
-              <p className="text-lg font-medium">Scanner Desligado</p>
-              <p className="text-sm opacity-75 mt-1">Toque para iniciar</p>
-            </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Controles */}
-      <div className="flex justify-center">
-        {!isScanning && !isLoading ? (
+      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        {!isScanning && !isLoading && (
           <Button
-            onClick={startCamera}
-            disabled={!codeReader}
-            className="flex items-center gap-2 px-8 py-3 text-base font-medium bg-blue-600 hover:bg-blue-700"
+            onClick={startScanner}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3"
             size="lg"
           >
             <Camera className="w-5 h-5" />
-            {codeReader ? "Iniciar Scanner" : "Carregando Scanner..."}
+            Iniciar Scanner
           </Button>
-        ) : (
-          <Button
-            onClick={stopCamera}
-            variant="destructive"
-            className="flex items-center gap-2 px-8 py-3 text-base font-medium"
-            size="lg"
-          >
+        )}
+
+        {isScanning && (
+          <Button onClick={stopScanner} variant="destructive" className="flex items-center gap-2 px-6 py-3" size="lg">
             <CameraOff className="w-5 h-5" />
             Parar Scanner
           </Button>
         )}
+
+        {error && (
+          <Button
+            onClick={retryScanner}
+            className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-3"
+            size="lg"
+          >
+            <RotateCcw className="w-5 h-5" />
+            Tentar Novamente
+          </Button>
+        )}
       </div>
 
-      {/* Info */}
-      <div className="text-center text-slate-600 space-y-3">
-        
-        <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
-          <p className="font-medium text-slate-700 mb-2">📋 Instruções de Uso:</p>
-          <div className="text-sm space-y-1 text-left">
-            
-            <p>• Posicione dentro da área azul destacada</p>
-            <p>• Mantenha o dispositivo estável durante o scan</p>
-            <p>• Compatível com EAN-13, EAN-8, UPC, Code 128 e Code 39</p>
-          </div>
-        </div>
-      </div>
+      {/* Dicas de uso */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="p-4">
+          <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+            <Camera className="w-4 h-4" />
+            Dicas para melhor leitura
+          </h4>
+          <ul className="text-sm text-blue-800 space-y-1">
+            <li>• Mantenha boa iluminação no ambiente</li>
+            <li>• Posicione o código de barras dentro da área destacada</li>
+            <li>• Mantenha o dispositivo estável durante a leitura</li>
+            <li>• Certifique-se de que o código está nítido e legível</li>
+          </ul>
+        </CardContent>
+      </Card>
+
+      {/* Canvas oculto para processamento */}
+      <canvas ref={canvasRef} className="hidden" />
     </div>
   )
 }

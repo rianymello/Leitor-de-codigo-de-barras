@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Save, X, Barcode, Package, Euro, Tag, Users, Grid3X3, Gamepad2, AlertCircle, Weight } from "lucide-react"
+import { Save, X, Barcode, Package, Euro, Tag, Users, Grid3X3, Gamepad2, AlertCircle, Weight, Box } from "lucide-react"
 import type { ScannedItem } from "@/app/page"
 
 interface BarcodeModalProps {
@@ -55,12 +55,19 @@ const CATEGORIES = [
 
 const PRODUCT_TYPES = ["Brinquedo", "Disfarces", "Verão", "Material Escolar"]
 
+const UNITS = [
+  { value: "UN", label: "UN (Unidade)" },
+  { value: "CX", label: "CX (Caixa)" },
+]
+
 export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalProps) {
   const [formData, setFormData] = useState({
     name: "",
+    siteDescription: "",
     brand: "",
     price: "",
     weight: "",
+    unit: "UN",
     ageRange: "",
     category: "",
     toyType: "",
@@ -72,6 +79,7 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
 
     setIsLoading(true)
 
+    // Normalizar preço (converter vírgula para ponto para cálculos internos)
     const normalizedPrice = formData.price ? formData.price.replace(",", ".") : ""
     const normalizedWeight = formData.weight ? formData.weight.replace(",", ".") : ""
 
@@ -80,9 +88,11 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
       fullBarcode: barcode,
       lastSixDigits: barcode.slice(-6),
       name: formData.name.trim() || `Produto ${barcode.slice(-6)}`,
+      siteDescription: formData.siteDescription.trim() || undefined,
       brand: formData.brand.trim() || undefined,
       price: normalizedPrice ? Number.parseFloat(normalizedPrice) : undefined,
       weight: normalizedWeight ? Number.parseFloat(normalizedWeight) : undefined,
+      unit: formData.unit || "UN",
       ageRange: formData.ageRange || undefined,
       category: formData.category || undefined,
       toyType: formData.toyType || undefined,
@@ -98,9 +108,11 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
     // Limpar formulário
     setFormData({
       name: "",
+      siteDescription: "",
       brand: "",
       price: "",
       weight: "",
+      unit: "UN",
       ageRange: "",
       category: "",
       toyType: "",
@@ -112,9 +124,11 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
     if (!isLoading) {
       setFormData({
         name: "",
+        siteDescription: "",
         brand: "",
         price: "",
         weight: "",
+        unit: "UN",
         ageRange: "",
         category: "",
         toyType: "",
@@ -126,6 +140,48 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
   const updateFormData = (field: string, value: string) => {
     console.log(`Atualizando campo ${field}:`, value)
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const formatPrice = (value: string) => {
+    // Remove tudo exceto números, vírgula e ponto
+    let cleaned = value.replace(/[^\d.,]/g, "")
+
+    // Se tem ponto, converte para vírgula
+    cleaned = cleaned.replace(".", ",")
+
+    // Se tem mais de uma vírgula, mantém apenas a primeira
+    const parts = cleaned.split(",")
+    if (parts.length > 2) {
+      cleaned = parts[0] + "," + parts.slice(1).join("")
+    }
+
+    // Limita a 2 casas decimais após a vírgula
+    if (parts.length === 2 && parts[1].length > 2) {
+      cleaned = parts[0] + "," + parts[1].substring(0, 2)
+    }
+
+    return cleaned
+  }
+
+  const formatWeight = (value: string) => {
+    // Remove tudo exceto números, vírgula e ponto
+    let cleaned = value.replace(/[^\d.,]/g, "")
+
+    // Se tem ponto, converte para vírgula
+    cleaned = cleaned.replace(".", ",")
+
+    // Se tem mais de uma vírgula, mantém apenas a primeira
+    const parts = cleaned.split(",")
+    if (parts.length > 2) {
+      cleaned = parts[0] + "," + parts.slice(1).join("")
+    }
+
+    // Limita a 2 casas decimais após a vírgula
+    if (parts.length === 2 && parts[1].length > 2) {
+      cleaned = parts[0] + "," + parts[1].substring(0, 2)
+    }
+
+    return cleaned
   }
 
   return (
@@ -180,12 +236,12 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
               <div className="space-y-2">
                 <Label htmlFor="name" className="flex items-center gap-2 text-base font-medium">
                   <Package className="w-4 h-4 text-blue-600" />
-                  Nome do Produto *
+                  DESCRIÇÃO *
                 </Label>
                 <Input
                   id="name"
                   type="text"
-                  placeholder="Digite o nome do produto"
+                  placeholder="Digite a descrição do produto"
                   value={formData.name}
                   onChange={(e) => updateFormData("name", e.target.value)}
                   required
@@ -203,7 +259,24 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
                 <div className="flex-1 h-px bg-slate-200"></div>
               </div>
 
-              {/* Marca e Preço */}
+              {/* Descrição do Site */}
+              <div className="space-y-2">
+                <Label htmlFor="siteDescription" className="flex items-center gap-2 text-base">
+                  <Package className="w-4 h-4 text-slate-500" />
+                  DESCRIÇÃOSITE
+                </Label>
+                <Input
+                  id="siteDescription"
+                  type="text"
+                  placeholder="Descrição que aparecerá no site (opcional)"
+                  value={formData.siteDescription}
+                  onChange={(e) => updateFormData("siteDescription", e.target.value)}
+                  className="text-base py-3 px-4"
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Marca e PVP1 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="brand" className="flex items-center gap-2 text-base">
@@ -224,16 +297,16 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
                 <div className="space-y-2">
                   <Label htmlFor="price" className="flex items-center gap-2 text-base">
                     <Euro className="w-4 h-4 text-slate-500" />
-                    Preço (€)
+                    PVP1
                   </Label>
                   <Input
                     id="price"
                     type="text"
-                    placeholder="Ex: 29,90 ou 29.90"
+                    placeholder="Ex: 29,90"
                     value={formData.price}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/[^\d.,]/g, "")
-                      updateFormData("price", value)
+                      const formatted = formatPrice(e.target.value)
+                      updateFormData("price", formatted)
                     }}
                     className="text-base py-3 px-4"
                     disabled={isLoading}
@@ -241,24 +314,49 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
                 </div>
               </div>
 
-              {/* Peso */}
-              <div className="space-y-2">
-                <Label htmlFor="weight" className="flex items-center gap-2 text-base">
-                  <Weight className="w-4 h-4 text-slate-500" />
-                  Peso (gramas)
-                </Label>
-                <Input
-                  id="weight"
-                  type="text"
-                  placeholder="Ex: 250 ou 1500"
-                  value={formData.weight}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^\d.,]/g, "")
-                    updateFormData("weight", value)
-                  }}
-                  className="text-base py-3 px-4"
-                  disabled={isLoading}
-                />
+              {/* Peso e Unidade */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="weight" className="flex items-center gap-2 text-base">
+                    <Weight className="w-4 h-4 text-slate-500" />
+                    Peso (gramas)
+                  </Label>
+                  <Input
+                    id="weight"
+                    type="text"
+                    placeholder="Ex: 1000,00"
+                    value={formData.weight}
+                    onChange={(e) => {
+                      const formatted = formatWeight(e.target.value)
+                      updateFormData("weight", formatted)
+                    }}
+                    className="text-base py-3 px-4"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-base">
+                    <Box className="w-4 h-4 text-slate-500" />
+                    UNIDADE
+                  </Label>
+                  <Select
+                    value={formData.unit}
+                    onValueChange={(value) => updateFormData("unit", value)}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger className="text-base py-3 px-4">
+                      <SelectValue placeholder="Selecione a unidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {UNITS.map((unit) => (
+                        <SelectItem key={unit.value} value={unit.value} className="text-base">
+                          {unit.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Faixa Etária e Categoria */}
@@ -373,7 +471,8 @@ export function BarcodeModal({ isOpen, barcode, onClose, onSave }: BarcodeModalP
           <div className="text-center text-sm text-slate-500 bg-slate-50 p-4 rounded-lg border border-slate-200">
             <p className="font-medium text-slate-700 mb-1">💡 Dica Profissional</p>
             <p>
-              Você pode cadastrar rapidamente apenas com o nome e completar as informações depois na lista de produtos
+              Você pode cadastrar rapidamente apenas com a descrição e completar as informações depois na lista de
+              produtos
             </p>
           </div>
         </div>

@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Trash2, Package, Tag, Calendar, Edit, Save, X, Euro, Weight } from "lucide-react"
+import { Trash2, Package, Tag, Calendar, Edit, Save, X, Euro, Weight, Box } from "lucide-react"
 import type { ScannedItem } from "@/app/page"
 
 interface ItemsListProps {
@@ -53,13 +53,20 @@ const CATEGORIES = [
 
 const PRODUCT_TYPES = ["Brinquedo", "Disfarces", "Verão", "Material Escolar"]
 
+const UNITS = [
+  { value: "UN", label: "UN (Unidade)" },
+  { value: "CX", label: "CX (Caixa)" },
+]
+
 export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps) {
   const [editingItem, setEditingItem] = useState<ScannedItem | null>(null)
   const [editForm, setEditForm] = useState({
     name: "",
+    siteDescription: "",
     brand: "",
     price: "",
     weight: "",
+    unit: "UN",
     ageRange: "",
     category: "",
     toyType: "",
@@ -84,9 +91,11 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
     setEditingItem(item)
     setEditForm({
       name: item.name,
+      siteDescription: item.siteDescription || "",
       brand: item.brand || "",
-      price: item.price ? item.price.toString() : "",
-      weight: item.weight ? item.weight.toString() : "",
+      price: item.price ? item.price.toFixed(2).replace(".", ",") : "",
+      weight: item.weight ? item.weight.toFixed(2).replace(".", ",") : "",
+      unit: item.unit || "UN",
       ageRange: item.ageRange || "",
       category: item.category || "",
       toyType: item.toyType || "",
@@ -104,9 +113,11 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
     const updatedItem: ScannedItem = {
       ...editingItem,
       name: editForm.name.trim() || editingItem.name,
+      siteDescription: editForm.siteDescription.trim() || undefined,
       brand: editForm.brand.trim() || undefined,
       price: normalizedPrice ? Number.parseFloat(normalizedPrice) : undefined,
       weight: normalizedWeight ? Number.parseFloat(normalizedWeight) : undefined,
+      unit: editForm.unit || "UN",
       ageRange: editForm.ageRange || undefined,
       category: editForm.category || undefined,
       toyType: editForm.toyType || undefined,
@@ -123,9 +134,11 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
     setEditingItem(null)
     setEditForm({
       name: "",
+      siteDescription: "",
       brand: "",
       price: "",
       weight: "",
+      unit: "UN",
       ageRange: "",
       category: "",
       toyType: "",
@@ -134,6 +147,48 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
 
   const updateEditForm = (field: string, value: string) => {
     setEditForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const formatPrice = (value: string) => {
+    // Remove tudo exceto números, vírgula e ponto
+    let cleaned = value.replace(/[^\d.,]/g, "")
+
+    // Se tem ponto, converte para vírgula
+    cleaned = cleaned.replace(".", ",")
+
+    // Se tem mais de uma vírgula, mantém apenas a primeira
+    const parts = cleaned.split(",")
+    if (parts.length > 2) {
+      cleaned = parts[0] + "," + parts.slice(1).join("")
+    }
+
+    // Limita a 2 casas decimais após a vírgula
+    if (parts.length === 2 && parts[1].length > 2) {
+      cleaned = parts[0] + "," + parts[1].substring(0, 2)
+    }
+
+    return cleaned
+  }
+
+  const formatWeight = (value: string) => {
+    // Remove tudo exceto números, vírgula e ponto
+    let cleaned = value.replace(/[^\d.,]/g, "")
+
+    // Se tem ponto, converte para vírgula
+    cleaned = cleaned.replace(".", ",")
+
+    // Se tem mais de uma vírgula, mantém apenas a primeira
+    const parts = cleaned.split(",")
+    if (parts.length > 2) {
+      cleaned = parts[0] + "," + parts.slice(1).join("")
+    }
+
+    // Limita a 2 casas decimais após a vírgula
+    if (parts.length === 2 && parts[1].length > 2) {
+      cleaned = parts[0] + "," + parts[1].substring(0, 2)
+    }
+
+    return cleaned
   }
 
   return (
@@ -148,6 +203,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg text-slate-800 leading-tight">{item.name}</h3>
+                    {item.siteDescription && <p className="text-sm text-slate-600 mt-1">{item.siteDescription}</p>}
                     <div className="flex items-center gap-2 mt-1">
                       {item.brand ? (
                         <>
@@ -183,16 +239,24 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                 <div className="space-y-2 text-sm">
                   {item.price && (
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-600">Preço:</span>
-                      <Badge className="bg-green-100 text-green-800 font-mono text-sm">€ {item.price.toFixed(2)}</Badge>
+                      <span className="text-slate-600">PVP1:</span>
+                      <Badge className="bg-green-100 text-green-800 font-mono text-sm">
+                        {item.price.toFixed(2).replace(".", ",")}
+                      </Badge>
                     </div>
                   )}
                   {item.weight && (
                     <div className="flex items-center gap-2">
                       <span className="text-slate-600">Peso:</span>
-                      <Badge className="bg-blue-100 text-blue-800 font-mono text-sm">{item.weight}g</Badge>
+                      <Badge className="bg-blue-100 text-blue-800 font-mono text-sm">
+                        {item.weight.toFixed(2).replace(".", ",")}g
+                      </Badge>
                     </div>
                   )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-600">Unidade:</span>
+                    <Badge className="bg-purple-100 text-purple-800 text-sm">{item.unit || "UN"}</Badge>
+                  </div>
                   {item.category && (
                     <div className="flex items-center gap-2">
                       <span className="text-slate-600">Categoria:</span>
@@ -225,10 +289,11 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50">
-              <TableHead className="font-semibold text-slate-700">Produto</TableHead>
+              <TableHead className="font-semibold text-slate-700">DESCRIÇÃO</TableHead>
               <TableHead className="font-semibold text-slate-700">Marca</TableHead>
-              <TableHead className="font-semibold text-slate-700">Preço</TableHead>
+              <TableHead className="font-semibold text-slate-700">PVP1</TableHead>
               <TableHead className="font-semibold text-slate-700">Peso</TableHead>
+              <TableHead className="font-semibold text-slate-700">UNIDADE</TableHead>
               <TableHead className="font-semibold text-slate-700">Categoria</TableHead>
               <TableHead className="font-semibold text-slate-700">Data</TableHead>
               <TableHead className="w-[120px] font-semibold text-slate-700">Ações</TableHead>
@@ -240,6 +305,7 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                 <TableCell>
                   <div>
                     <div className="font-medium text-slate-800">{item.name}</div>
+                    {item.siteDescription && <div className="text-xs text-slate-500">{item.siteDescription}</div>}
                     <div className="text-xs text-slate-500 font-mono">{item.fullBarcode}</div>
                   </div>
                 </TableCell>
@@ -252,17 +318,24 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                 </TableCell>
                 <TableCell>
                   {item.price ? (
-                    <Badge className="bg-green-100 text-green-800 font-mono">€ {item.price.toFixed(2)}</Badge>
+                    <Badge className="bg-green-100 text-green-800 font-mono">
+                      {item.price.toFixed(2).replace(".", ",")}
+                    </Badge>
                   ) : (
                     <span className="text-slate-400 text-sm italic">Não informado</span>
                   )}
                 </TableCell>
                 <TableCell>
                   {item.weight ? (
-                    <Badge className="bg-blue-100 text-blue-800 font-mono">{item.weight}g</Badge>
+                    <Badge className="bg-blue-100 text-blue-800 font-mono">
+                      {item.weight.toFixed(2).replace(".", ",")}g
+                    </Badge>
                   ) : (
                     <span className="text-slate-400 text-sm italic">Não informado</span>
                   )}
+                </TableCell>
+                <TableCell>
+                  <Badge className="bg-purple-100 text-purple-800">{item.unit || "UN"}</Badge>
                 </TableCell>
                 <TableCell>
                   {item.category ? (
@@ -326,15 +399,15 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
               </Card>
 
               <div className="space-y-4">
-                {/* Nome */}
+                {/* DESCRIÇÃO */}
                 <div className="space-y-2">
                   <Label htmlFor="edit-name" className="text-base font-medium">
-                    Nome do Produto
+                    DESCRIÇÃO
                   </Label>
                   <Input
                     id="edit-name"
                     type="text"
-                    placeholder="Digite o nome do produto"
+                    placeholder="Digite a descrição do produto"
                     value={editForm.name}
                     onChange={(e) => updateEditForm("name", e.target.value)}
                     className="text-base py-3 px-4"
@@ -342,7 +415,23 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   />
                 </div>
 
-                {/* Marca e Preço */}
+                {/* DESCRIÇÃOSITE */}
+                <div className="space-y-2">
+                  <Label htmlFor="edit-siteDescription" className="text-base">
+                    DESCRIÇÃOSITE
+                  </Label>
+                  <Input
+                    id="edit-siteDescription"
+                    type="text"
+                    placeholder="Descrição que aparecerá no site (opcional)"
+                    value={editForm.siteDescription}
+                    onChange={(e) => updateEditForm("siteDescription", e.target.value)}
+                    className="text-base py-3 px-4"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                {/* Marca e PVP1 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="edit-brand" className="text-base">
@@ -362,16 +451,16 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   <div className="space-y-2">
                     <Label htmlFor="edit-price" className="flex items-center gap-2 text-base">
                       <Euro className="w-4 h-4 text-slate-500" />
-                      Preço (€)
+                      PVP1
                     </Label>
                     <Input
                       id="edit-price"
                       type="text"
-                      placeholder="Ex: 29,90 ou 29.90"
+                      placeholder="Ex: 29,90"
                       value={editForm.price}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/[^\d.,]/g, "")
-                        updateEditForm("price", value)
+                        const formatted = formatPrice(e.target.value)
+                        updateEditForm("price", formatted)
                       }}
                       className="text-base py-3 px-4"
                       disabled={isLoading}
@@ -379,24 +468,49 @@ export function ItemsList({ items, onDeleteItem, onUpdateItem }: ItemsListProps)
                   </div>
                 </div>
 
-                {/* Peso */}
-                <div className="space-y-2">
-                  <Label htmlFor="edit-weight" className="flex items-center gap-2 text-base">
-                    <Weight className="w-4 h-4 text-slate-500" />
-                    Peso (gramas)
-                  </Label>
-                  <Input
-                    id="edit-weight"
-                    type="text"
-                    placeholder="Ex: 250 ou 1500"
-                    value={editForm.weight}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^\d.,]/g, "")
-                      updateEditForm("weight", value)
-                    }}
-                    className="text-base py-3 px-4"
-                    disabled={isLoading}
-                  />
+                {/* Peso e Unidade */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-weight" className="flex items-center gap-2 text-base">
+                      <Weight className="w-4 h-4 text-slate-500" />
+                      Peso (gramas)
+                    </Label>
+                    <Input
+                      id="edit-weight"
+                      type="text"
+                      placeholder="Ex: 1000,00"
+                      value={editForm.weight}
+                      onChange={(e) => {
+                        const formatted = formatWeight(e.target.value)
+                        updateEditForm("weight", formatted)
+                      }}
+                      className="text-base py-3 px-4"
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2 text-base">
+                      <Box className="w-4 h-4 text-slate-500" />
+                      UNIDADE
+                    </Label>
+                    <Select
+                      value={editForm.unit}
+                      onValueChange={(value) => updateEditForm("unit", value)}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger className="text-base py-3 px-4">
+                        <SelectValue placeholder="Selecione a unidade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {UNITS.map((unit) => (
+                          <SelectItem key={unit.value} value={unit.value} className="text-base">
+                            {unit.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {/* Categoria e Tipo */}
